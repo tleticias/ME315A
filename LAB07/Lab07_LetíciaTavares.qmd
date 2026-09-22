@@ -1,0 +1,145 @@
+---
+title: "ME315A_LAB07"
+author: "Letícia Santos Tavares"
+format: pdf
+editor: visual
+---
+
+## CONEXÃO R \>\>\> SQLite
+
+1.  Baixe o arquivo `uwmadison.sqlite3`. Conecte-se a ele usando o pacote `RSQLite`, armazenando a conexão em uma variável `conn`.
+
+```{r}
+library(RSQLite)
+library(DBI)
+conn <- dbConnect(SQLite(), 'uwmadison.sqlite3')
+```
+
+
+2.   Quem são e quantos são os professores que lecionaram disciplinas cujo tópico era estatística (`subjects.abbreviation='STAT'`);
+
+> QUEM SÃO
+
+
+```{sql connection=conn}
+SELECT DISTINCT instructors.name AS STAT_TEACHERS
+FROM subjects 
+LEFT JOIN subject_memberships 
+ON subjects.code= subject_memberships.subject_code
+LEFT JOIN sections
+ON subject_memberships.course_offering_uuid = sections.course_offering_uuid
+LEFT JOIN teachings 
+ON sections.uuid = teachings.section_uuid
+LEFT JOIN instructors 
+ON teachings.instructor_id = instructors.id
+WHERE subjects.abbreviation = 'STAT'
+```
+
+> QUANTOS SÃO: 
+
+```{sql connection=conn}
+SELECT COUNT(DISTINCT instructors.name) AS STAT_TEACHERS_TOTAL
+FROM subjects 
+LEFT JOIN subject_memberships 
+ON subjects.code= subject_memberships.subject_code
+LEFT JOIN sections
+ON subject_memberships.course_offering_uuid = sections.course_offering_uuid
+LEFT JOIN teachings 
+ON sections.uuid = teachings.section_uuid
+LEFT JOIN instructors 
+ON teachings.instructor_id = instructors.id
+WHERE subjects.abbreviation = 'STAT'
+```
+
+3.  O GPA americano é definido numa escala de 0 a 4, em que A = 4, AB = 3.5, B = 3, BC = 2.5, C = 2, D = 1 e F = 0. Determinando a nota média de cada oferecimento pela ponderação da quantidade de alunos em cada extrato com os valores numéricos de cada conceito, indique (no que se referente a disciplinas no assunto de estatística):
+
+- Quem é o professor mais difícil?
+```{sql connection=conn}
+SELECT DISTINCT instructors.name, ((4.0*a_count + 3.5*ab_count + 3.0*b_count + 2.5*bc_count + 2.0*c_count+ d_count)/(a_count + ab_count + b_count + bc_count + c_count+d_count + f_count)) AS GPA
+FROM grade_distributions
+LEFT JOIN sections 
+ON grade_distributions.course_offering_uuid = sections.course_offering_uuid
+LEFT JOIN teachings
+ON sections.uuid = teachings.section_uuid
+LEFT JOIN instructors 
+ON teachings.instructor_id = instructors.id
+LEFT JOIN subject_memberships 
+ON subject_memberships.course_offering_uuid = grade_distributions.course_offering_uuid
+LEFT JOIN subjects
+ON subjects.code = subject_memberships.subject_code
+WHERE subjects.abbreviation='STAT'AND (a_count + ab_count + b_count + bc_count + c_count + d_count + f_count) > 0
+
+ORDER BY GPA
+LIMIT 1
+```
+
+- Quem é o professor mais fácil?
+```{sql connection=conn}
+SELECT DISTINCT instructors.name, ((4.0*a_count + 3.5*ab_count + 3.0*b_count + 2.5*bc_count + 2.0*c_count+ d_count)/(a_count + ab_count + b_count + bc_count + c_count+d_count + f_count)) AS GPA
+FROM grade_distributions
+LEFT JOIN sections 
+ON grade_distributions.course_offering_uuid = sections.course_offering_uuid
+LEFT JOIN teachings
+ON sections.uuid = teachings.section_uuid
+LEFT JOIN instructors 
+ON teachings.instructor_id = instructors.id
+LEFT JOIN subject_memberships 
+ON subject_memberships.course_offering_uuid = grade_distributions.course_offering_uuid
+LEFT JOIN subjects
+ON subjects.code = subject_memberships.subject_code
+WHERE subjects.abbreviation='STAT'AND (a_count + ab_count + b_count + bc_count + c_count + d_count + f_count) > 0
+
+ORDER BY GPA DESC
+LIMIT 1
+```
+
+- Qual é a disciplina mais difícil?
+```{sql connection=conn}
+SELECT DISTINCT subjects.name, ((4.0*a_count + 3.5*ab_count + 3.0*b_count + 2.5*bc_count + 2.0*c_count+ d_count)/(a_count + ab_count + b_count + bc_count + c_count+d_count + f_count)) AS GPA
+FROM grade_distributions
+LEFT JOIN sections 
+ON grade_distributions.course_offering_uuid = sections.course_offering_uuid
+LEFT JOIN teachings
+ON sections.uuid = teachings.section_uuid
+LEFT JOIN instructors 
+ON teachings.instructor_id = instructors.id
+LEFT JOIN subject_memberships 
+ON subject_memberships.course_offering_uuid = grade_distributions.course_offering_uuid
+LEFT JOIN subjects
+ON subjects.code = subject_memberships.subject_code
+WHERE (a_count + ab_count + b_count + bc_count + c_count + d_count + f_count) > 0
+
+ORDER BY GPA
+LIMIT 1
+```
+
+- Qual é a disciplina mais fácil?
+```{sql connection=conn}
+SELECT DISTINCT subjects.name, ((4.0*a_count + 3.5*ab_count + 3.0*b_count + 2.5*bc_count + 2.0*c_count+ d_count)/(a_count + ab_count + b_count + bc_count + c_count+d_count + f_count)) AS GPA
+FROM grade_distributions
+LEFT JOIN sections 
+ON grade_distributions.course_offering_uuid = sections.course_offering_uuid
+LEFT JOIN teachings
+ON sections.uuid = teachings.section_uuid
+LEFT JOIN instructors 
+ON teachings.instructor_id = instructors.id
+LEFT JOIN subject_memberships 
+ON subject_memberships.course_offering_uuid = grade_distributions.course_offering_uuid
+LEFT JOIN subjects
+ON subjects.code = subject_memberships.subject_code
+WHERE (a_count + ab_count + b_count + bc_count + c_count + d_count + f_count) > 0
+
+ORDER BY GPA DESC
+LIMIT 1
+```
+
+4.  Desconecte do banco de dados.
+```{r}
+dbDisconnect(conn)
+```
+
+```{r}
+Sys.setenv(TZ = "America/Sao_Paulo")
+Sys.time()
+```
+
