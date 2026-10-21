@@ -1,0 +1,112 @@
+---
+title: "LAB09_ME315"
+author: "Letícia Santos Tavares"
+format: pdf
+editor: visual
+---
+
+## LABORATÓRIO 9- VISUALIZAÇÃO DE DADOS COM `plotnine`
+
+```{r}
+library(reticulate)
+py_require(c("pandas", "plotnine", "matplotlib"))
+```
+
+1.  Importe o conjunto de dados `diamonds`, cujo arquivo está disponível no website da disciplina.
+
+```{python}
+import pandas as pd
+from plotnine import *
+
+diamonds = pd.read_csv("diamonds.csv.gz", compression="gzip")
+```
+
+2.  Crie uma visualização de dados que descreva a associação existente entre as variáveis peso (`carat`) e preço (`price`). Que ações você tomou para garantir que você produziu um gráfico de boa qualidade? Escreva um parágrafo comunicando os seus achados.
+
+```{python}
+grafico_q2 = (
+    ggplot(dados, aes(x="carat", y="price"))
+    + geom_point(alpha=0.18, size=0.8, color="#286090")
+    + labs(
+        title="Relação entre peso e preço dos diamantes",
+        subtitle="Cada ponto representa um diamante",
+        x="Peso (quilates)",
+        y="Preço (USD)",
+        caption="Fonte: conjunto de dados diamonds"
+    )
+    + theme_minimal()
+    + theme(
+        figure_size=(9, 5.5),
+        plot_title=element_text(weight="bold")
+    )
+)
+
+```
+
+### `COMENTÁRIO QUESTÃO 2:`
+
+Para garantir que o gráfico tivesse uma boa qualidade, defini a capacidade como sendo alpha=0.8 e o tamanho dos pontos como sendo size=0.18, aplicando também o tema minimalista e adicionar os títulos dos eixos para melhor compreensão. Em relação ao resultado do gráfico, é possível perceber uma associação positiva e não linear entre o peso do diamante e seu preço, ou seja, quanto maior é o peso do diamente, a tendência é que o preço também aumente.
+
+3.  A relação identificada na questão anterior é a mesma relação presente nos diferentes cortes de diamantes? Crie uma visualização que demonstre seus achados eficientemente. Descreva sua conclusão em um parágrafo.
+
+```{python}
+grafico_q3 = (
+    ggplot(dados, aes(x="carat", y="price"))
+    + geom_point(alpha=0.20, size=0.7, color="#286090")
+    + facet_grid(". ~ cut")
+    + labs(
+        title="Relação entre peso e preço por qualidade de corte",
+        subtitle="Comparação entre os cinco tipos de corte",
+        x="Peso (quilates)",
+        y="Preço (USD)",
+        caption="Fonte: conjunto de dados diamonds"
+    )
+    + theme_minimal()
+    + theme(
+        figure_size=(14, 5),
+        plot_title=element_text(weight="bold"),
+        strip_text=element_text(size=9, weight="bold"),
+        axis_text_x=element_text(size=8)
+    )
+)
+
+```
+
+### `COMENTÁRIO QUESTÃO 3:`
+
+Em geral percebe-se que a tendência positiva entre o peso do diamante e o preço mantém-se semelhante para todas as categorias. Mas, os diamantes que possuem cortes de melhor qualidade concentram mais observações e preços mais elevados para um mesmo peso quando comparado a cortes inferiores.
+
+4.  Crie uma visualização que mostre a relação entre preço e peso do diamante, considerando as diferentes combinações de qualidade de corte, cor e clareza do diamante. Quais foram as dificuldades encontradas? A relação entre preço e peso é a mesma para diferentes configurações de diamantes?
+
+```{python}
+grafico_q4 = (
+    ggplot(dados, aes(x="carat", y="price", color="cut"))
+    + geom_point(alpha=0.35, size=0.55)
+    + facet_grid("clarity ~ color")
+    + scale_y_log10()
+    + labs(
+        title="Peso e preço por corte, cor e clareza",
+        subtitle="Cada painel representa uma combinação de clareza (linha) e cor (coluna)",
+        x="Peso (quilates)",
+        y="Preço (USD, escala logarítmica)",
+        color="Qualidade do corte",
+        caption="Fonte: conjunto diamonds, de plotnine.data",
+    )
+    + theme_bw()
+    + theme(
+        figure_size=(16, 12),
+        plot_title=element_text(weight="bold"),
+        strip_text_x=element_text(size=8, weight="bold"),
+        strip_text_y=element_text(size=8, weight="bold"),
+        axis_text=element_text(size=7),
+        legend_position="bottom",
+    )
+)
+grafico_q4.save(pasta_saida / "questao4_corte_cor_clareza.png", dpi=300, verbose=False)
+
+```
+
+### `COMENTÁRIO QUESTÃO 4:`
+
+A principal dificuldade foi conseguir cruzar simultaneamente as 5 variáveis e evitar uma poluição visual. \
+A relação entre peso e preço não é a mesma para as diferentes configurações de diamantes, embora a tendência de crescimento seja comum, o nível de preço muda dependendo da configuração.
